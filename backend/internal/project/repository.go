@@ -133,3 +133,57 @@ func GetProjectWithTasks(projectID string) (*Project, []map[string]interface{}, 
 
 	return project, tasks, nil
 }
+
+func GetProjectStats(projectID string) (map[string]int, map[string]int, error) {
+	// status counts
+	statusQuery := `
+	SELECT status, COUNT(*)
+	FROM tasks
+	WHERE project_id = $1
+	GROUP BY status
+	`
+
+	statusRows, err := db.Pool.Query(context.Background(), statusQuery, projectID)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer statusRows.Close()
+
+	statusCounts := make(map[string]int)
+
+	for statusRows.Next() {
+		var status string
+		var count int
+		if err := statusRows.Scan(&status, &count); err != nil {
+			return nil, nil, err
+		}
+		statusCounts[status] = count
+	}
+
+	// assignee counts
+	assigneeQuery := `
+	SELECT assignee_id, COUNT(*)
+	FROM tasks
+	WHERE project_id = $1 AND assignee_id IS NOT NULL
+	GROUP BY assignee_id
+	`
+
+	assigneeRows, err := db.Pool.Query(context.Background(), assigneeQuery, projectID)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer assigneeRows.Close()
+
+	assigneeCounts := make(map[string]int)
+
+	for assigneeRows.Next() {
+		var assigneeID string
+		var count int
+		if err := assigneeRows.Scan(&assigneeID, &count); err != nil {
+			return nil, nil, err
+		}
+		assigneeCounts[assigneeID] = count
+	}
+
+	return statusCounts, assigneeCounts, nil
+}
