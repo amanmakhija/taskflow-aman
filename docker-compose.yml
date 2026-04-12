@@ -27,8 +27,11 @@ services:
       - db
     volumes:
       - ./backend/migrations:/migrations
-    command: [
-      "-path", "/migrations",
-      "-database", "postgres://postgres:postgres@db:5432/taskflow?sslmode=disable",
-      "up"
-    ]
+    entrypoint: ["/bin/sh", "-c"]
+    command: >
+      "
+      sleep 5 &&
+      migrate -path /migrations 
+      -database postgres://postgres:postgres@db:5432/taskflow?sslmode=disable 
+      up
+      "
