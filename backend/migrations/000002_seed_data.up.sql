@@ -4,7 +4,7 @@ VALUES (
     uuid_generate_v4(),
     'Test User',
     'test@example.com',
-    '$2a$12$w8Q7Z1j7sHkYQY9X1n4m3OQzQ7mV7tY9Z1l7K8X9Y7Z8Q7X1Y9Z1G'
+    '$2a$12$8CeB7CrCSeMv./FnFuFZzOqHaL0E7Yqa0EcWwW2wbt9JRZ0K2/YtO'
 );
 
 -- project

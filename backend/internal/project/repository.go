@@ -65,3 +65,71 @@ func GetProjectByID(id string) (*Project, error) {
 
 	return &p, nil
 }
+
+func UpdateProject(p *Project) error {
+	query := `
+	UPDATE projects
+	SET name = $1, description = $2
+	WHERE id = $3
+	`
+
+	_, err := db.Pool.Exec(context.Background(),
+		query,
+		p.Name,
+		p.Description,
+		p.ID,
+	)
+
+	return err
+}
+
+func DeleteProject(id string) error {
+	query := `DELETE FROM projects WHERE id = $1`
+
+	_, err := db.Pool.Exec(context.Background(), query, id)
+	return err
+}
+
+func GetProjectWithTasks(projectID string) (*Project, []map[string]interface{}, error) {
+	project, err := GetProjectByID(projectID)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	query := `
+	SELECT id, title, status, priority, assignee_id, due_date
+	FROM tasks WHERE project_id = $1
+	`
+
+	rows, err := db.Pool.Query(context.Background(), query, projectID)
+	if err != nil {
+		return nil, nil, err
+	}
+	defer rows.Close()
+
+	var tasks []map[string]interface{}
+
+	for rows.Next() {
+		var (
+			id, title, status, priority string
+			assigneeID                  *string
+			dueDate                     *string
+		)
+
+		err := rows.Scan(&id, &title, &status, &priority, &assigneeID, &dueDate)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		tasks = append(tasks, map[string]interface{}{
+			"id":          id,
+			"title":       title,
+			"status":      status,
+			"priority":    priority,
+			"assignee_id": assigneeID,
+			"due_date":    dueDate,
+		})
+	}
+
+	return project, tasks, nil
+}
