@@ -6,6 +6,7 @@ import (
 	"taskflow/internal/auth"
 	"taskflow/internal/config"
 	"taskflow/internal/db"
+	"taskflow/internal/middleware"
 
 	"github.com/gin-gonic/gin"
 )
@@ -18,8 +19,21 @@ func main() {
 	authService := &auth.Service{JWTSecret: cfg.JWTSecret}
 	authHandler := &auth.Handler{Service: authService}
 
+	authMiddleware := middleware.AuthMiddleware(cfg.JWTSecret)
+
+	// Public routes
 	r.POST("/auth/register", authHandler.Register)
 	r.POST("/auth/login", authHandler.Login)
+
+	// Protected routes
+	protected := r.Group("/")
+	protected.Use(authMiddleware)
+
+	// test route
+	protected.GET("/me", func(c *gin.Context) {
+		userID := c.GetString("user_id")
+		c.JSON(200, gin.H{"user_id": userID})
+	})
 
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
