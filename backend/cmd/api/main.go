@@ -7,6 +7,7 @@ import (
 	"taskflow/internal/config"
 	"taskflow/internal/db"
 	"taskflow/internal/middleware"
+	"taskflow/internal/project"
 
 	"github.com/gin-gonic/gin"
 )
@@ -34,6 +35,12 @@ func main() {
 		userID := c.GetString("user_id")
 		c.JSON(200, gin.H{"user_id": userID})
 	})
+
+	projectService := &project.Service{}
+	projectHandler := &project.Handler{Service: projectService}
+
+	protected.GET("/projects", projectHandler.List)
+	protected.POST("/projects", projectHandler.Create)
 
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
